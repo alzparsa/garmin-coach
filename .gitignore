@@ -1,0 +1,12 @@
+# Secrets: never commit
+garmin_key.txt
+*.key
+.env
+secrets.json
+
+# Local data and caches
+data/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db

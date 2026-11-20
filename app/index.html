@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c0e12">
+<title>Coach</title>
+<style>
+:root {
+  --bg: #0c0e12;
+  --card: #15181e;
+  --card-2: #1c2028;
+  --line: #262b35;
+  --text: #eef1f5;
+  --muted: #8b93a3;
+  --faint: #5b6271;
+  --accent: #ff6b3d;       /* effort orange */
+  --accent-ink: #1a0d07;
+  --good: #3ddc84;
+  --ok: #f5b83d;
+  --low: #ff5c6c;
+  --run: #4fa3ff;
+  --strength: #ff6b3d;
+  --bike: #b38cff;
+  --swim: #2ed3c6;
+  --walk: #8fb36b;
+  --mobility: #f39bd0;
+  --other: #7d8696;
+  --radius: 18px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body {
+  font: 16px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+.num, .big, .stat b { font-variant-numeric: tabular-nums; }
+
+main {
+  padding: calc(var(--safe-t) + 14px) 16px calc(var(--safe-b) + 96px);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* header */
+.top { display: flex; align-items: flex-end; justify-content: space-between; margin: 6px 2px 16px; }
+.top h1 { font-size: 30px; line-height: 1.1; margin: 0; letter-spacing: -0.02em; font-weight: 750; }
+.top .sub { color: var(--muted); font-size: 14px; margin-bottom: 4px; }
+.icon-btn {
+  width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--card); color: var(--text); display: grid; place-items: center; cursor: pointer;
+}
+.icon-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* cards */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 12px; font-weight: 650; display: flex; justify-content: space-between; align-items: center; }
+.card h2 a, .card h2 button { text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--accent); text-decoration: none; background: none; border: 0; padding: 0; cursor: pointer; font-weight: 600; }
+.card.hero { background: linear-gradient(160deg, #1d2129 0%, #15181e 60%); }
+.section-title { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 22px 4px 10px; font-weight: 650; }
+.muted { color: var(--muted); }
+.faint { color: var(--faint); }
+.small { font-size: 13px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.row.between { justify-content: space-between; }
+.grow { flex: 1; min-width: 0; }
+.empty { color: var(--muted); font-size: 14px; padding: 6px 0; }
+.empty b { color: var(--text); font-weight: 600; }
+
+/* readiness */
+.ready-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.pill.good { color: var(--good); background: rgba(61, 220, 132, .12); }
+.pill.ok { color: var(--ok); background: rgba(245, 184, 61, .12); }
+.pill.low { color: var(--low); background: rgba(255, 92, 108, .12); }
+.pill.unknown { color: var(--muted); background: var(--card-2); }
+.signals { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.signal { background: var(--card-2); border-radius: 12px; padding: 10px 12px; border-left: 3px solid var(--faint); }
+.signal.good { border-left-color: var(--good); }
+.signal.ok { border-left-color: var(--ok); }
+.signal.low { border-left-color: var(--low); }
+.signal .k { font-size: 12px; color: var(--muted); }
+.signal .v { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.signal .d { font-size: 12px; color: var(--faint); }
+
+/* workouts */
+.wo { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); cursor: pointer; }
+.wo:first-child { border-top: 0; padding-top: 2px; }
+.wo .bar { width: 4px; border-radius: 4px; background: var(--other); flex: none; }
+.wo .t { font-weight: 650; }
+.wo .meta { font-size: 13px; color: var(--muted); }
+.wo .det { font-size: 14px; color: #c3c9d4; white-space: pre-wrap; margin-top: 4px; }
+.wo.done .t { text-decoration: line-through; text-decoration-color: var(--good); }
+.wo.skipped { opacity: .45; }
+.tag { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: var(--card-2); color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.tag.ai { color: var(--accent); background: rgba(255, 107, 61, .12); }
+.tag.done { color: var(--good); background: rgba(61, 220, 132, .12); }
+.t-run { background: var(--run) !important; } .t-strength { background: var(--strength) !important; }
+.t-bike { background: var(--bike) !important; } .t-swim { background: var(--swim) !important; }
+.t-mobility { background: var(--mobility) !important; } .t-rest { background: var(--faint) !important; }
+.t-walk { background: var(--walk) !important; }
+
+/* week strip */
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.day { text-align: center; padding: 8px 0 10px; border-radius: 12px; background: var(--card-2); font-size: 12px; color: var(--muted); }
+.day b { display: block; font-size: 16px; color: var(--text); margin: 2px 0 6px; }
+.day.today { outline: 2px solid var(--accent); }
+.dots { display: flex; justify-content: center; gap: 3px; min-height: 7px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--other); }
+.dots i.done { box-shadow: 0 0 0 2px var(--card-2), 0 0 0 3.5px var(--good); }
+
+/* progress */
+.goal { padding: 12px 0; border-top: 1px solid var(--line); cursor: pointer; }
+.goal:first-child { border-top: 0; padding-top: 0; }
+.goal .t { font-weight: 650; }
+.prog { height: 8px; background: var(--card-2); border-radius: 6px; overflow: hidden; margin: 8px 0 4px; }
+.prog > i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), #ffb03d); border-radius: 6px; }
+.goal-long { border: 1px solid rgba(255, 107, 61, .35); background: linear-gradient(160deg, rgba(255,107,61,.10), var(--card) 55%); }
+.big { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+
+/* lists */
+.item { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line); }
+.item:first-child { border-top: 0; padding-top: 0; }
+.item .x { color: var(--faint); background: none; border: 0; font-size: 18px; cursor: pointer; padding: 4px 6px; }
+.item .r { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* buttons */
+.btn { appearance: none; border: 0; border-radius: 14px; padding: 13px 16px; font: inherit; font-weight: 650; cursor: pointer; background: var(--card-2); color: var(--text); display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; border: 1px solid var(--line); }
+.btn.block { width: 100%; }
+.btn.sm { padding: 8px 12px; border-radius: 10px; font-size: 14px; }
+.btn:disabled { opacity: .5; }
+.btn-row { display: flex; gap: 8px; }
+.btn-row .btn { flex: 1; }
+.spark { width: 16px; height: 16px; }
+
+/* segmented */
+.seg { display: flex; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 3px; margin-bottom: 14px; }
+.seg button { flex: 1; border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600; font-size: 14px; padding: 8px; border-radius: 9px; cursor: pointer; }
+.seg button.on { background: var(--card-2); color: var(--text); }
+
+/* forms */
+label.f { display: block; margin-bottom: 12px; }
+label.f > span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
+input, select, textarea {
+  width: 100%; font: inherit; font-size: 16px; color: var(--text); background: var(--card-2);
+  border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+textarea { min-height: 84px; resize: vertical; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.hint { font-size: 12px; color: var(--faint); margin-top: 4px; }
+
+/* week nav */
+.weeknav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.weeknav b { font-size: 15px; }
+.daygroup { margin-bottom: 4px; }
+.daygroup .dh { display: flex; justify-content: space-between; align-items: center; padding: 10px 2px 6px; }
+.daygroup .dh b { font-size: 15px; }
+.daygroup .dh.today b { color: var(--accent); }
+.daygroup .add { background: none; border: 0; color: var(--faint); font-size: 22px; line-height: 1; cursor: pointer; padding: 0 4px; }
+
+/* AI plan */
+.ai-card { border-color: rgba(255, 107, 61, .45); }
+.ai-card ul { margin: 6px 0 0; padding-left: 18px; color: #c3c9d4; font-size: 14px; }
+.ai-day { padding: 10px 0; border-top: 1px dashed var(--line); }
+.ai-day .why { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+/* stats */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { background: var(--card-2); border-radius: 12px; padding: 10px; }
+.stat b { display: block; font-size: 20px; }
+.stat span { font-size: 12px; color: var(--muted); }
+
+/* charts */
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart text { fill: var(--faint); font-size: 10px; font-family: inherit; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 8px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: none; border: 1px solid var(--line); background: var(--card-2); color: var(--muted); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.chip.on { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+
+/* chat */
+.chat { display: flex; flex-direction: column; gap: 10px; max-height: 52vh; overflow-y: auto; margin-bottom: 12px; padding-right: 2px; }
+.msg { padding: 10px 13px; border-radius: 16px; font-size: 15px; white-space: pre-wrap; max-width: 92%; }
+.msg.user { align-self: flex-end; background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 4px; }
+.msg.assistant { align-self: flex-start; background: var(--card-2); border-bottom-left-radius: 4px; }
+.msg h4 { margin: 8px 0 2px; font-size: 15px; }
+
+/* tab bar */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  display: flex; justify-content: space-around;
+  padding: 8px 6px calc(var(--safe-b) + 8px);
+  background: rgba(12, 14, 18, .86); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  border-top: 1px solid var(--line);
+}
+.tabbar a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--faint); text-decoration: none; font-size: 11px; font-weight: 600; padding: 4px 0; }
+.tabbar svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.tabbar a.on { color: var(--accent); }
+
+/* sheet */
+.sheet-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, .55); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 30; }
+.sheet-backdrop.on { opacity: 1; pointer-events: auto; }
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 31; max-height: 92vh; overflow-y: auto;
+  background: var(--card); border-radius: 22px 22px 0 0; border-top: 1px solid var(--line);
+  padding: 10px 18px calc(var(--safe-b) + 20px); transform: translateY(105%); transition: transform .26s cubic-bezier(.2, .8, .2, 1);
+  max-width: 640px; margin: 0 auto;
+}
+.sheet.on { transform: none; }
+.sheet .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 12px; }
+.sheet h3 { margin: 0 0 14px; font-size: 20px; letter-spacing: -0.01em; }
+
+.toast { position: fixed; left: 50%; bottom: calc(var(--safe-b) + 92px); transform: translate(-50%, 20px); opacity: 0; transition: .25s; background: #f0f2f5; color: #111; padding: 10px 16px; border-radius: 12px; font-weight: 600; font-size: 14px; z-index: 50; pointer-events: none; max-width: 90vw; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+.toast.err { background: var(--low); color: #fff; }
+
+.loading { display: inline-block; width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.fab { position: fixed; right: 16px; bottom: calc(var(--safe-b) + 84px); z-index: 19; border-radius: 999px; padding: 13px 18px; box-shadow: 0 8px 28px rgba(255, 107, 61, .35); }
+
+</style>
+</head>
+<body>
+<main id="view"></main>
+<nav class="tabbar" id="tabbar">
+  <a href="#today" data-tab="today"><svg viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/><circle cx="12" cy="12" r="3.5"/></svg><span>Today</span></a>
+  <a href="#plan" data-tab="plan"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4m8-4v4"/></svg><span>Plan</span></a>
+  <a href="#log" data-tab="log"><svg viewBox="0 0 24 24"><path d="M6.5 8v8M17.5 8v8M3.5 10v4M20.5 10v4M6.5 12h11"/></svg><span>Log</span></a>
+  <a href="#trends" data-tab="trends"><svg viewBox="0 0 24 24"><path d="M3.5 18l5-6 4 3.5 7.5-9"/><path d="M15 6.5h5v5"/></svg><span>Trends</span></a>
+  <a href="#goals" data-tab="goals"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".8" fill="currentColor"/></svg><span>Goals</span></a>
+</nav>
+<div class="sheet-backdrop" id="backdrop"></div>
+<section class="sheet" id="sheet" aria-modal="true"></section>
+<div class="toast" id="toast"></div>
+<script>
+/* Tiny dependency-free SVG charts. */
+(function () {
+  const W = 340, H = 150, P = { l: 30, r: 8, t: 10, b: 20 };
+
+  function niceRange(min, max) {
+    if (min === max) { min -= 1; max += 1; }
+    const pad = (max - min) * 0.1;
+    return [min - pad, max + pad];
+  }
+  let SPAN = 100;
+  const fmt = v => Math.abs(v) >= 1000 ? (v / 1000).toFixed(1) + 'k' : (SPAN < 12 || Math.abs(v) < 10 ? +v.toFixed(1) : Math.round(v));
+  const shortDate = d => { const x = new Date(d + 'T00:00'); return (x.getMonth() + 1) + '/' + x.getDate(); };
+
+  function axes(yMin, yMax, labels) {
+    SPAN = yMax - yMin;
+    let s = '';
+    for (let i = 0; i <= 3; i++) {
+      const v = yMin + (yMax - yMin) * i / 3;
+      const y = P.t + (H - P.t - P.b) * (1 - i / 3);
+      s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y}" y2="${y}" stroke="#262b35" stroke-width="1"/>`;
+      s += `<text x="${P.l - 5}" y="${y + 3}" text-anchor="end">${fmt(v)}</text>`;
+    }
+    labels.forEach(([x, t]) => { s += `<text x="${x}" y="${H - 5}" text-anchor="middle">${t}</text>`; });
+    return s;
+  }
+
+  /* series: [{name, color, points:[{date, value}]}] ; opts: {band:[lo,hi], dots:true} */
+  window.lineChart = function (series, opts = {}) {
+    const all = series.flatMap(s => s.points.filter(p => p.value != null));
+    if (all.length < 2) return '<div class="empty">Not enough data yet.</div>';
+    const dates = [...new Set(all.map(p => p.date))].sort();
+    const t0 = +new Date(dates[0]), t1 = +new Date(dates[dates.length - 1]) || t0 + 1;
+    let [yMin, yMax] = niceRange(Math.min(...all.map(p => p.value)), Math.max(...all.map(p => p.value)));
+    if (opts.band) { yMin = Math.min(yMin, opts.band[0]); yMax = Math.max(yMax, opts.band[1]); }
+    const X = d => P.l + (W - P.l - P.r) * ((+new Date(d) - t0) / Math.max(1, t1 - t0));
+    const Y = v => P.t + (H - P.t - P.b) * (1 - (v - yMin) / (yMax - yMin));
+    const labels = [0, .5, 1].map(f => { const d = dates[Math.round((dates.length - 1) * f)]; return [X(d), shortDate(d)]; });
+    let s = `<svg class="chart" viewBox="0 0 ${W} ${H}">` + axes(yMin, yMax, labels);
+    if (opts.band) s += `<rect x="${P.l}" width="${W - P.l - P.r}" y="${Y(opts.band[1])}" height="${Y(opts.band[0]) - Y(opts.band[1])}" fill="#3ddc84" opacity=".08"/>`;
+    series.forEach(sr => {
+      const pts = sr.points.filter(p => p.value != null);
+      if (!pts.length) return;
+      const d = pts.map((p, i) => (i ? 'L' : 'M') + X(p.date).toFixed(1) + ',' + Y(p.value).toFixed(1)).join('');
+      s += `<path d="${d}" fill="none" stroke="${sr.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" ${sr.dashed ? 'stroke-dasharray="4 4"' : ''}/>`;
+      if (opts.dots || pts.length < 25) pts.forEach(p => { s += `<circle cx="${X(p.date)}" cy="${Y(p.value)}" r="2.6" fill="${sr.color}"/>`; });
+      const last = pts[pts.length - 1];
+      s += `<circle cx="${X(last.date)}" cy="${Y(last.value)}" r="4" fill="${sr.color}" stroke="#15181e" stroke-width="2"/>`;
+    });
+    s += '</svg>';
+    if (series.length > 1 || opts.legend) s += '<div class="legend">' + series.map(sr => `<span><i style="background:${sr.color}"></i>${sr.name}</span>`).join('') + '</div>';
+    return s;
+  };
+
+  /* bars: [{label, parts:{key:value}}]; colors: {key: color} */
+  window.barChart = function (bars, colors, opts = {}) {
+    const totals = bars.map(b => Object.values(b.parts).reduce((a, v) => a + (v || 0), 0));
+    const max = Math.max(...totals, 1);
+    const yMax = max * 1.1;
+    const n = bars.length, bw = (W - P.l - P.r) / n;
+    const Y = v => P.t + (H - P.t - P.b) * (1 - v / yMax);
+    const labels = bars.map((b, i) => [P.l + bw * i + bw / 2, (i % Math.ceil(n / 6) === 0 || i === n - 1) ? b.label : '']);
+    let s = `<svg class="chart" viewBox="0 0 ${W} ${H}">` + axes(0, yMax, labels);
+    bars.forEach((b, i) => {
+      let acc = 0;
+      const x = P.l + bw * i + bw * 0.18, w = bw * 0.64;
+      Object.keys(colors).forEach(k => {
+        const v = b.parts[k] || 0;
+        if (!v) return;
+        const y1 = Y(acc), y2 = Y(acc + v);
+        s += `<rect x="${x}" y="${y2}" width="${w}" height="${Math.max(0, y1 - y2)}" fill="${colors[k]}" rx="2"/>`;
+        acc += v;
+      });
+      if (i === n - 1 && opts.highlightLast) s += `<rect x="${x - 2}" y="${Y(acc) - 2}" width="${w + 4}" height="${Y(0) - Y(acc) + 2}" fill="none" stroke="#eef1f5" stroke-opacity=".35" rx="3"/>`;
+    });
+    s += '</svg>';
+    const keys = Object.keys(colors).filter(k => bars.some(b => b.parts[k]));
+    if (keys.length > 1) s += '<div class="legend">' + keys.map(k => `<span><i style="background:${colors[k]}"></i>${k}</span>`).join('') + '</div>';
+    return s;
+  };
+})();
+
+</script>
+<script>
+/* Coach — hosted in your Claude account. Data: claude db capability. AI: claude sample capability. */
+const $ = (s, el = document) => el.querySelector(s);
+const view = $('#view');
+const S = { planWeek: null, logTab: 'lifts', liftSel: null, metricSel: null };
+const COLS = ['goals', 'planned', 'lifts', 'metrics', 'aiplans', 'chat', 'days', 'acts'];
+const D = Object.fromEntries(COLS.map(c => [c, []]));
+let PROFILE = {}, GSYNC = {}, DB = null, SAMPLE = null, MCP = null;
+const HELPER = 'host:garmin-coach';
+const loaded = new Set();
+
+const TYPES = ['run', 'strength', 'bike', 'swim', 'mobility', 'walk', 'rest', 'other'];
+const TYPE_COLORS = { run: '#4fa3ff', strength: '#ff6b3d', bike: '#b38cff', swim: '#2ed3c6', walk: '#8fb36b', mobility: '#f39bd0', other: '#7d8696' };
+const SPARK = '<svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>';
+const GEAR = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+
+/* ---------- utils ---------- */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const iso = d => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 10); };
+const todayIso = () => iso(new Date());
+const addDays = (s, n) => { const d = new Date(s + 'T12:00'); d.setDate(d.getDate() + n); return iso(d); };
+const monday = s => { const d = new Date((s || todayIso()) + 'T12:00'); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return iso(d); };
+const dname = (s, o = { weekday: 'short' }) => new Date(s + 'T12:00').toLocaleDateString(undefined, o);
+const mins = m => !m ? '' : m < 60 ? `${Math.round(m)} min` : `${Math.floor(m / 60)}h ${String(Math.round(m % 60)).padStart(2, '0')}`;
+const km = m => m ? (m / 1000).toFixed(m >= 10000 ? 1 : 2) + ' km' : '';
+const num = v => v == null || v === '' ? '–' : (Math.round(v * 10) / 10).toString();
+const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const lc = s => (s || '').trim().toLowerCase();
+const typeOf = t => { t = (t || 'other').toLowerCase(); for (const k of ['run', 'strength', 'bike', 'swim', 'walk', 'mobility', 'rest']) if (t.includes(k)) return k; if (t.includes('cycl') || t.includes('ride')) return 'bike'; if (t.includes('weight')) return 'strength'; if (t.includes('yoga') || t.includes('pilates')) return 'mobility'; if (t.includes('hik')) return 'walk'; return 'other'; };
+const byDate = (a, b) => (a.date || '').localeCompare(b.date || '') || (a.created_at || '').localeCompare(b.created_at || '');
+
+function toast(msg, err) {
+  const t = $('#toast');
+  t.textContent = msg; t.className = 'toast on' + (err ? ' err' : '');
+  clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast', err ? 5000 : 2200);
+}
+function openSheet(html, onMount) {
+  const sh = $('#sheet');
+  sh.innerHTML = '<div class="grab"></div>' + html;
+  $('#backdrop').classList.add('on'); sh.classList.add('on'); sh.scrollTop = 0;
+  onMount && onMount(sh);
+}
+function closeSheet() { $('#sheet').classList.remove('on'); $('#backdrop').classList.remove('on'); }
+$('#backdrop').onclick = closeSheet;
+
+function formData(root) {
+  const o = {};
+  root.querySelectorAll('[name]').forEach(el => {
+    let v = el.value;
+    if (el.type === 'number') v = v === '' ? null : Number(v);
+    else if (v === '') v = null;
+    o[el.name] = v;
+  });
+  return o;
+}
+async function busy(btn, fn) {
+  const html = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="loading"></span>';
+  try { return await fn(); } catch (e) { toast(e.message || String(e), true); } finally { btn.disabled = false; btn.innerHTML = html; }
+}
+function md(text) {
+  return esc(text).split('\n').map(l => /^#{1,4}\s/.test(l) ? `<h4>${l.replace(/^#+\s/, '')}</h4>` : l.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')).join('\n').replace(/<\/h4>\n/g, '</h4>');
+}
+
+/* ---------- data layer ---------- */
+const clean = o => Object.fromEntries(Object.entries(o).filter(([k, v]) => v !== undefined && k !== 'id'));
+async function add(col, obj) { if (!DB) throw new Error('Storage unavailable'); return DB.collection(col).add(clean({ ...obj, created_at: new Date().toISOString() })); }
+async function upd(col, id, obj) { if (!DB) throw new Error('Storage unavailable'); return DB.doc(col + '/' + id).update(clean(obj)); }
+async function put(col, id, obj) { if (!DB) throw new Error('Storage unavailable'); return DB.doc(col + '/' + id).set(clean(obj)); }
+async function del(col, id) { if (!DB) throw new Error('Storage unavailable'); return DB.doc(col + '/' + id).delete(); }
+const dbErr = e => { if (e && e.code === 'quota_exceeded') toast('Storage is full: ' + e.message, true); else if (e && e.code === 'invalid_argument') toast("Couldn't save: " + e.message, true); else toast("Couldn't save. Try again.", true); };
+
+let renderQueued = false;
+function scheduleRender() {
+  if (renderQueued) return;
+  renderQueued = true;
+  setTimeout(() => {
+    renderQueued = false;
+    const a = document.activeElement;
+    if (a && view.contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) { a.addEventListener('blur', scheduleRender, { once: true }); return; }
+    render();
+  }, 60);
+}
+
+async function initData() {
+  const slowTimer = setTimeout(() => { if (loaded.size < COLS.length) toast("Still loading your data. It may be out of date until it connects.", true); }, 10000);
+  DB = await claude.use('db');
+  if (!DB) { clearTimeout(slowTimer); view.innerHTML = `<div class="card"><h2>Storage unavailable</h2><div class="empty">Open this page while signed in to Claude to see and save your data.</div></div>`; return; }
+  COLS.forEach(c => DB.collection(c).onSnapshot(s => {
+    D[c] = s.docs.map(d => ({ ...d.data(), id: d.id }));
+    if (!s.metadata.fromCache) loaded.add(c);
+    if (loaded.size === COLS.length) clearTimeout(slowTimer);
+    scheduleRender();
+  }, e => { loaded.add(c); toast('Data connection lost. Reload the page.', true); }));
+  DB.doc('settings/profile').onSnapshot(s => { PROFILE = s.exists ? { ...s.data() } : {}; scheduleRender(); }, () => {});
+  DB.doc('settings/garmin').onSnapshot(s => { GSYNC = s.exists ? { ...s.data() } : {}; scheduleRender(); }, () => {});
+  claude.use('mcp').then(m => { MCP = m; scheduleRender(); });
+  claude.use('sample').then(s => { SAMPLE = s; scheduleRender(); });
+}
+const units = () => PROFILE.units || 'kg';
+
+/* ---------- Garmin sync (local helper on the laptop, via the Claude desktop app) ---------- */
+const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+function syncErrorText(e) {
+  switch (e && e.code) {
+    case 'server_not_connected': return 'Sync works from the Claude desktop app on your laptop, with the Garmin helper set up. Open this page there and tap Sync.';
+    case 'cancelled': return 'Sync was cancelled.';
+    case 'approval_required': return 'Claude needs your OK to run the Garmin helper. Tap Sync again and choose Allow.';
+    case 'not_in_manifest': return 'Garmin sync is turned off for this page. Turn it back on in the page permissions, then try again.';
+    case 'blocked_by_policy': return 'Your Claude organization blocks local helpers.';
+    case 'tool_error': return 'Garmin helper: ' + (e.message || 'something went wrong');
+    case 'server_unavailable': case 'upstream_error': return "The helper didn't answer in time. Try again in a moment.";
+    default: return 'Sync failed: ' + (e?.message || e?.code || 'unknown error');
+  }
+}
+async function syncGarmin(btn, daysBack) {
+  if (!MCP) return toast(syncErrorText({ code: 'server_not_connected' }), true);
+  const t = todayIso();
+  let start = daysBack ? addDays(t, -daysBack) : (GSYNC.last_end ? addDays(GSYNC.last_end, -3) : addDays(t, -29));
+  const windows = [];
+  for (let s = start; s <= t; s = addDays(s, 90)) { const e = addDays(s, 89); windows.push([s, e < t ? e : t]); }
+  let nActs = 0, nDays = 0, nDone = 0; const problems = [];
+  for (let i = 0; i < windows.length; i++) {
+    if (windows.length > 1) toast(`Syncing Garmin… ${i + 1}/${windows.length}`);
+    let res;
+    try { res = await MCP.callTool(HELPER, 'garmin_sync', { start_date: windows[i][0], end_date: windows[i][1] }, { cache: false }); }
+    catch (e) { toast(syncErrorText(e), true); if (i === 0) return; break; }
+    const data = res.payload || {};
+    problems.push(...(data.errors || []));
+    for (const a of data.activities || []) {
+      const id = 'g' + a.id, prev = D.acts.find(x => x.id === id), body = { ...a, source: 'garmin' };
+      delete body.id;
+      if (!prev || !sameJson(clean({ ...prev, created_at: undefined }), clean(body))) { await put('acts', id, body); nActs++; }
+      // match a planned session on the same day and sport, and mark it done
+      const w = D.planned.find(p => p.date === a.date && (p.status || 'planned') === 'planned' && typeOf(p.type) === typeOf(a.type));
+      if (w && !D.planned.some(p => p.garmin_id === a.id)) {
+        await upd('planned', w.id, { status: 'done', garmin_id: a.id, duration_min: Math.round((a.duration_s || 0) / 60) || w.duration_min || null, distance_km: a.distance_m ? Math.round(a.distance_m / 10) / 100 : null });
+        nDone++;
+      }
+    }
+    for (const d of data.days || []) {
+      const prev = D.days.find(x => (x.date || x.id) === d.date) || {};
+      const merged = { ...prev, ...d, source: prev.source === 'manual' ? 'garmin+manual' : (prev.source || 'garmin') };
+      delete merged.id;
+      if (!sameJson(clean(prev), clean(merged))) { await put('days', d.date, merged); nDays++; }
+    }
+  }
+  await put('settings', 'garmin', { last_sync_at: new Date().toISOString(), last_end: t, problems: problems.slice(0, 5) });
+  toast(`Garmin synced: ${nActs} activities, ${nDays} days updated${nDone ? `, ${nDone} planned session(s) marked done` : ''}` + (problems.length ? ` · ${problems.length} problem(s), see Settings` : ''), problems.length > 0);
+}
+const lastSyncText = () => GSYNC.last_sync_at ? 'Garmin synced ' + new Date(GSYNC.last_sync_at).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : 'Garmin not synced yet';
+
+/* ---------- analytics ---------- */
+const e1rm = (w, r) => (!w || !r || r > 12) ? null : Math.round((r === 1 ? w : w * (1 + r / 30)) * 10) / 10;
+
+function prs() {
+  const lifts = {}, metrics = {};
+  [...D.lifts].sort(byDate).forEach(r => {
+    const k = lc(r.exercise), est = e1rm(r.weight, r.reps);
+    const cur = lifts[k] = lifts[k] || { exercise: r.exercise.trim(), unit: r.unit || units(), best_e1rm: null, best_weight: null };
+    if (est && (!cur.best_e1rm || est > cur.best_e1rm.value)) cur.best_e1rm = { value: est, date: r.date, weight: r.weight, reps: r.reps };
+    if (!cur.best_weight || r.weight > cur.best_weight.value) cur.best_weight = { value: r.weight, date: r.date, reps: r.reps };
+  });
+  [...D.metrics].sort(byDate).forEach(r => {
+    const k = lc(r.metric);
+    const cur = metrics[k] = metrics[k] || { metric: r.metric.trim(), unit: r.unit, better: r.better || 'higher', best: null, latest: null };
+    cur.latest = { value: r.value, date: r.date };
+    const b = cur.best;
+    if (!b || (cur.better === 'higher' ? r.value > b.value : r.value < b.value)) cur.best = { value: r.value, date: r.date };
+  });
+  const s = (a, k) => Object.values(a).sort((x, y) => x[k].localeCompare(y[k]));
+  return { lifts: s(lifts, 'exercise'), metrics: s(metrics, 'metric') };
+}
+function recentPrs(days = 14) {
+  const since = addDays(todayIso(), -days), p = prs(), out = [];
+  p.lifts.forEach(l => { const b = l.best_e1rm; if (b && b.date >= since) out.push(`${l.exercise}: ${num(b.weight)}${l.unit} × ${b.reps} (e1RM ${num(b.value)})`); });
+  p.metrics.forEach(m => { const b = m.best; if (b && b.date >= since && D.metrics.filter(x => lc(x.metric) === lc(m.metric)).length > 1) out.push(`${m.metric}: ${num(b.value)} ${m.unit || ''}`.trim()); });
+  return out;
+}
+function liftSeries(name) {
+  const by = {};
+  D.lifts.filter(r => lc(r.exercise) === lc(name)).forEach(r => { const e = e1rm(r.weight, r.reps); if (e) by[r.date] = Math.max(by[r.date] || 0, e); });
+  return Object.keys(by).sort().map(d => ({ date: d, value: by[d] }));
+}
+const metricSeries = name => D.metrics.filter(r => lc(r.metric) === lc(name)).sort(byDate).map(r => ({ date: r.date, value: r.value }));
+function dailySeries(days = 90) {
+  const since = addDays(todayIso(), -days);
+  return D.days.map(r => ({ ...r, date: r.date || r.id })).filter(r => r.date >= since).sort(byDate);
+}
+
+/* Sessions = watch activities when available, otherwise completed planned workouts (session-RPE load). */
+const INT = { easy: 3, moderate: 5, hard: 7 };
+function sessions(from, to) {
+  const acts = D.acts.filter(a => a.date >= from && a.date <= to).map(a => ({
+    date: a.date, type: typeOf(a.type), minutes: (a.duration_s || 0) / 60, km: (a.distance_m || 0) / 1000,
+    load: a.training_load || (a.duration_s || 0) / 60 * 4, source: 'watch' }));
+  const actDates = new Set(acts.map(a => a.date + a.type));
+  const done = D.planned.filter(w => w.status === 'done' && w.date >= from && w.date <= to && typeOf(w.type) !== 'rest' && !actDates.has(w.date + typeOf(w.type)))
+    .map(w => ({ date: w.date, type: typeOf(w.type), minutes: w.duration_min || 0, km: w.distance_km || 0,
+      load: (w.duration_min || 0) * (w.rpe || INT[w.intensity] || 5) / 1.25, source: 'log' }));
+  return [...acts, ...done];
+}
+function weeklyVolume(weeks = 12) {
+  const start = addDays(monday(), -7 * (weeks - 1)), out = [];
+  for (let i = 0; i < weeks; i++) {
+    const ws = addDays(start, 7 * i), we = addDays(ws, 6), ss = sessions(ws, we), by = {};
+    ss.forEach(s => by[s.type] = Math.round((by[s.type] || 0) + s.minutes));
+    const tonnage = D.lifts.filter(l => l.date >= ws && l.date <= we).reduce((a, l) => a + (l.sets || 1) * l.reps * l.weight, 0);
+    out.push({ week: ws, minutes: Math.round(ss.reduce((a, s) => a + s.minutes, 0)), minutes_by_type: by,
+      run_km: Math.round(ss.filter(s => s.type === 'run').reduce((a, s) => a + s.km, 0) * 10) / 10,
+      load: Math.round(ss.reduce((a, s) => a + s.load, 0)), sessions: ss.length, tonnage: Math.round(tonnage) });
+  }
+  return out;
+}
+function loadRatio() {
+  const t = todayIso(), ss = sessions(addDays(t, -27), t);
+  const acute = ss.filter(s => s.date > addDays(t, -7)).reduce((a, s) => a + s.load, 0);
+  const chronic = ss.reduce((a, s) => a + s.load, 0) / 4;
+  const enoughHistory = sessions(addDays(t, -60), addDays(t, -21)).length > 0; // need ~3 weeks before the ratio means anything
+  return { acute: Math.round(acute), chronic: Math.round(chronic), ratio: (chronic < 1 || !enoughHistory) ? null : Math.round(acute / chronic * 100) / 100 };
+}
+function readiness() {
+  const rows = dailySeries(30), t = todayIso();
+  const latest = rows.length && rows[rows.length - 1].date >= addDays(t, -1) ? rows[rows.length - 1] : null;
+  const signals = [];
+  const base = (f, n) => { const v = rows.filter(r => r !== latest && r[f] != null).slice(-n).map(r => r[f]); return v.length >= 3 ? mean(v) : null; };
+  if (latest) {
+    const h = latest.hrv, hb = base('hrv', 7);
+    if (h != null) { const d = hb ? (h - hb) / hb * 100 : null; signals.push({ name: 'HRV', value: `${Math.round(h)} ms`, vs: d == null ? 'need 3+ days' : `${d > 0 ? '+' : ''}${Math.round(d)}% vs 7-day`, state: d == null ? 'good' : d > -5 ? 'good' : d > -12 ? 'ok' : 'low' }); }
+    const r = latest.rhr, rb = base('rhr', 14);
+    if (r != null) { const d = rb ? r - rb : null; signals.push({ name: 'Resting HR', value: `${Math.round(r)} bpm`, vs: d == null ? 'need 3+ days' : `${d > 0 ? '+' : ''}${Math.round(d)} vs 14-day`, state: d == null ? 'good' : d <= 2 ? 'good' : d <= 5 ? 'ok' : 'low' }); }
+    const sh = latest.sleep_hours;
+    if (sh != null) signals.push({ name: 'Sleep', value: `${num(sh)} h` + (latest.sleep_score ? ` · ${latest.sleep_score}` : ''), vs: latest.sleep_score ? 'hours · score' : '', state: sh >= 7 ? 'good' : sh >= 6 ? 'ok' : 'low' });
+    const bb = latest.body_battery;
+    if (bb != null) signals.push({ name: 'Body Battery', value: `${bb}`, vs: 'peak', state: bb >= 70 ? 'good' : bb >= 45 ? 'ok' : 'low' });
+    if (latest.soreness != null) signals.push({ name: 'Soreness', value: `${latest.soreness}/5`, vs: 'how you feel', state: latest.soreness <= 2 ? 'good' : latest.soreness <= 3 ? 'ok' : 'low' });
+  }
+  const lr = loadRatio();
+  if (lr.ratio) signals.push({ name: 'Load ratio', value: `${lr.ratio}`, vs: '7d vs 28d', state: lr.ratio >= .8 && lr.ratio <= 1.3 ? 'good' : lr.ratio <= 1.5 ? 'ok' : 'low' });
+  if (!latest) return { level: 'unknown', signals, checkedIn: false, summary: 'No check-in today. Add this morning\'s numbers from Garmin Connect.' };
+  const lows = signals.filter(s => s.state === 'low').length, oks = signals.filter(s => s.state === 'ok').length;
+  const level = lows >= 2 ? 'low' : (lows === 1 || oks >= 2) ? 'ok' : 'good';
+  return { level, signals, checkedIn: latest.date === t, date: latest.date,
+    summary: { good: 'Green light. Good day for quality work.', ok: 'Mixed signals. Train, but keep intensity in check.', low: 'Recovery looks compromised. Consider easy work or rest.' }[level] };
+}
+function adherence(weeks = 4) {
+  const since = addDays(monday(), -7 * (weeks - 1)), t = todayIso();
+  const rows = D.planned.filter(w => w.date >= since && w.date < t && typeOf(w.type) !== 'rest');
+  const done = rows.filter(w => w.status === 'done').length;
+  return { done, planned: rows.length, pct: rows.length ? Math.round(done / rows.length * 100) : null };
+}
+function goalProgress(g) {
+  const m = (g.metric || '').trim(); if (!m) return null;
+  let s = liftSeries(m), cur, source = 'e1RM';
+  if (s.length) cur = Math.max(...s.map(x => x.value));
+  else { s = metricSeries(m); if (!s.length) return null; const v = s.map(x => x.value); cur = g.better === 'lower' ? Math.min(...v) : Math.max(...v); source = 'log'; }
+  const out = { current: cur, source, series: s.slice(-30) };
+  if (g.baseline_value != null && g.target_value != null && g.target_value !== g.baseline_value)
+    out.pct = Math.max(0, Math.min(100, Math.round((cur - g.baseline_value) / (g.target_value - g.baseline_value) * 100)));
+  if (g.target_date) out.days_left = Math.round((new Date(g.target_date + 'T12:00') - new Date(todayIso() + 'T12:00')) / 864e5);
+  return out;
+}
+function goalsWithProgress() {
+  const rank = { active: 0, achieved: 1, dropped: 2 };
+  return D.goals.map(g => ({ ...g, status: g.status || 'active', progress: goalProgress(g) }))
+    .sort((a, b) => rank[a.status] - rank[b.status] || (a.target_date || '9').localeCompare(b.target_date || '9'));
+}
+function knownNames() {
+  const u = a => [...new Map(a.map(x => [lc(x), x.trim()])).values()].sort();
+  return { exercises: u(D.lifts.map(l => l.exercise)), metrics: u(D.metrics.map(m => m.metric)) };
+}
+
+/* ---------- router ---------- */
+const VIEWS = { today: renderToday, plan: renderPlan, log: renderLog, trends: renderTrends, goals: renderGoals };
+function render() {
+  const tab = VIEWS[(location.hash || '').slice(1)] ? location.hash.slice(1) : 'today';
+  document.querySelectorAll('.tabbar a').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
+  if (!DB) return;
+  try { VIEWS[tab](); } catch (e) { console.error(e); view.innerHTML = `<div class="card">Something went wrong: ${esc(e.message)}</div>`; }
+}
+window.addEventListener('hashchange', () => { closeSheet(); window.scrollTo(0, 0); render(); });
+const header = (title, sub, right = '') => `<header class="top"><div><div class="sub">${esc(sub)}</div><h1>${esc(title)}</h1></div>${right}</header>`;
+
+/* ---------- workouts ---------- */
+function woHtml(w, opts = {}) {
+  const t = typeOf(w.type);
+  const meta = [mins(w.duration_min), w.intensity].filter(Boolean).join(' · ');
+  return `<div class="wo ${w.status || 'planned'}" data-wo="${w.id}">
+    <div class="bar t-${t}"></div>
+    <div class="grow">
+      <div class="row between"><span class="t">${esc(w.title)}</span>
+        <span class="row" style="gap:5px">${w.source === 'ai' ? '<span class="tag ai">AI</span>' : ''}${w.status === 'done' ? `<span class="tag done">Done${w.rpe ? ' · RPE ' + w.rpe : ''}</span>` : w.status === 'skipped' ? '<span class="tag">Skipped</span>' : ''}</span></div>
+      ${meta ? `<div class="meta">${esc(meta)}</div>` : ''}
+      ${w.details ? `<div class="det">${esc(w.details)}</div>` : ''}
+      ${opts.actions && (w.status || 'planned') === 'planned' && t !== 'rest' ? `<div class="btn-row" style="margin-top:10px"><button class="btn sm primary" data-complete="${w.id}">Mark done</button><button class="btn sm ghost" data-skip="${w.id}">Skip</button></div>` : ''}
+    </div></div>`;
+}
+function bindWorkouts(root) {
+  const find = id => D.planned.find(x => x.id === id);
+  root.querySelectorAll('[data-wo]').forEach(el => el.onclick = e => { if (e.target.closest('button')) return; const w = find(el.dataset.wo); if (w) workoutSheet(w); });
+  root.querySelectorAll('[data-complete]').forEach(b => b.onclick = () => completeSheet(find(b.dataset.complete)));
+  root.querySelectorAll('[data-skip]').forEach(b => b.onclick = () => upd('planned', b.dataset.skip, { status: 'skipped' }).catch(dbErr));
+}
+function completeSheet(w) {
+  openSheet(`<h3>Nice. How did it feel?</h3>
+    <p class="muted small" style="margin-top:-8px">${esc(w.title)}</p>
+    <div class="grid2"><label class="f"><span>Effort (RPE 1–10)</span><input name="rpe" type="number" min="1" max="10" inputmode="numeric" placeholder="7"></label>
+    <label class="f"><span>Actual minutes</span><input name="duration_min" type="number" inputmode="numeric" value="${w.duration_min ?? ''}"></label></div>
+    ${typeOf(w.type) === 'run' ? '<label class="f"><span>Distance (km)</span><input name="distance_km" type="number" step="0.01" inputmode="decimal"></label>' : ''}
+    <label class="f"><span>Notes (energy, pain, what changed)</span><textarea name="feel_notes" placeholder="Legs heavy, cut last set…"></textarea></label>
+    <p class="hint">Lifted? Log your sets in the Log tab so they count toward PRs.</p>
+    <button class="btn primary block" id="ok">Save</button>`, sh => {
+    $('#ok', sh).onclick = e => busy(e.currentTarget, async () => { await upd('planned', w.id, { ...formData(sh), status: 'done' }); closeSheet(); toast('Logged'); });
+  });
+}
+function workoutSheet(w) {
+  const isNew = !w.id;
+  openSheet(`<h3>${isNew ? 'Add workout' : 'Edit workout'}</h3>
+    <div class="grid2"><label class="f"><span>Date</span><input name="date" type="date" value="${w.date || todayIso()}"></label>
+    <label class="f"><span>Type</span><select name="type">${TYPES.map(t => `<option ${typeOf(w.type) === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label></div>
+    <label class="f"><span>Title</span><input name="title" value="${esc(w.title || '')}" placeholder="Lower body A / Tempo run"></label>
+    <div class="grid2"><label class="f"><span>Duration (min)</span><input name="duration_min" type="number" inputmode="numeric" value="${w.duration_min ?? ''}"></label>
+    <label class="f"><span>Intensity</span><select name="intensity">${['', 'easy', 'moderate', 'hard'].map(t => `<option ${(w.intensity || '') === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label></div>
+    <label class="f"><span>Details</span><textarea name="details" placeholder="Squat 5x5 @ 100kg, RDL 3x8…">${esc(w.details || '')}</textarea></label>
+    ${isNew ? '' : `<div class="grid2"><label class="f"><span>Status</span><select name="status">${['planned', 'done', 'skipped'].map(t => `<option ${(w.status || 'planned') === t ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+    <label class="f"><span>RPE</span><input name="rpe" type="number" min="1" max="10" value="${w.rpe ?? ''}"></label></div>
+    <label class="f"><span>How it felt</span><input name="feel_notes" value="${esc(w.feel_notes || '')}"></label>`}
+    <div class="btn-row">${isNew ? '' : '<button class="btn ghost" id="del">Delete</button>'}<button class="btn primary" id="save">Save</button></div>`, sh => {
+    $('#save', sh).onclick = e => busy(e.currentTarget, async () => {
+      const d = formData(sh); if (!d.title) return toast('Add a title', true);
+      if (isNew) await add('planned', { ...d, source: 'me', status: 'planned' }); else await upd('planned', w.id, d);
+      closeSheet();
+    });
+    if (!isNew) $('#del', sh).onclick = e => busy(e.currentTarget, async () => { await del('planned', w.id); closeSheet(); });
+  });
+}
+
+/* ---------- morning check-in (numbers from Garmin Connect) ---------- */
+function checkinSheet() {
+  const t = todayIso(), cur = D.days.find(d => (d.date || d.id) === t) || {};
+  openSheet(`<h3>Morning check-in</h3>
+    <p class="muted small" style="margin-top:-8px">${(cur.source || '').includes('garmin') ? 'Filled in from your last Garmin sync. Add soreness, or correct anything.' : 'Copy these from the Garmin Connect app (My Day), or tap Sync Garmin on your laptop. It powers your readiness score and the coach.'}</p>
+    <div class="grid2"><label class="f"><span>Sleep (hours)</span><input name="sleep_hours" type="number" step="0.1" inputmode="decimal" value="${cur.sleep_hours ?? ''}" placeholder="7.3"></label>
+    <label class="f"><span>Sleep score</span><input name="sleep_score" type="number" inputmode="numeric" value="${cur.sleep_score ?? ''}" placeholder="82"></label></div>
+    <div class="grid2"><label class="f"><span>HRV overnight (ms)</span><input name="hrv" type="number" inputmode="numeric" value="${cur.hrv ?? ''}" placeholder="58"></label>
+    <label class="f"><span>Resting HR (bpm)</span><input name="rhr" type="number" inputmode="numeric" value="${cur.rhr ?? ''}" placeholder="50"></label></div>
+    <div class="grid2"><label class="f"><span>Body Battery (peak)</span><input name="body_battery" type="number" inputmode="numeric" value="${cur.body_battery ?? ''}" placeholder="85"></label>
+    <label class="f"><span>Soreness (1 none – 5 very)</span><input name="soreness" type="number" min="1" max="5" inputmode="numeric" value="${cur.soreness ?? ''}"></label></div>
+    <p class="hint">Leave blank whatever you don't have.</p>
+    <button class="btn primary block" id="ok">Save</button>`, sh => {
+    $('#ok', sh).onclick = e => busy(e.currentTarget, async () => { const c = { ...cur, ...formData(sh), date: t, source: (cur.source || '').includes('garmin') ? 'garmin+manual' : 'manual' }; delete c.id; await put('days', t, c); closeSheet(); toast('Checked in'); });
+  });
+}
+
+/* ---------- TODAY ---------- */
+function renderToday() {
+  const t = todayIso(), ws = monday(t), we = addDays(ws, 6);
+  const week = D.planned.filter(w => w.date >= ws && w.date <= we).sort(byDate);
+  const todays = week.filter(w => w.date === t);
+  const r = readiness(), goals = goalsWithProgress().filter(g => g.status === 'active'), adh = adherence(4), rp = recentPrs();
+  const setup = !D.goals.length || !PROFILE.days_per_week;
+
+  let h = header('Today', dname(t, { weekday: 'long', month: 'short', day: 'numeric' }), `<button class="icon-btn" id="gear" aria-label="Settings">${GEAR}</button>`);
+  if (setup) h += `<div class="card hero"><h2>Get set up</h2>
+    <div class="item"><span class="grow">1. Tell the coach about you (days, equipment, injuries)</span>${PROFILE.days_per_week ? '<span class="tag done">Done</span>' : '<button class="btn sm" id="setup-profile">Add</button>'}</div>
+    <div class="item"><span class="grow">2. Set a long-term and short-term goal</span>${D.goals.length ? '<span class="tag done">Done</span>' : '<a class="btn sm" href="#goals">Add</a>'}</div>
+    <div class="item"><span class="grow">3. Add this week's planned workouts, then ask the coach to plan around them</span><a class="btn sm" href="#plan">Plan</a></div></div>`;
+
+  h += `<div class="card"><div class="ready-head"><span class="pill ${r.level}">${{ good: 'Ready', ok: 'Caution', low: 'Recover', unknown: 'Check in' }[r.level]}</span><span class="small muted grow">${esc(r.summary)}</span></div>
+    ${r.signals.length ? `<div class="signals">${r.signals.map(s => `<div class="signal ${s.state}"><div class="k">${esc(s.name)}</div><div class="v">${esc(s.value)}</div><div class="d">${esc(s.vs)}</div></div>`).join('')}</div>` : ''}
+    <div class="btn-row" style="margin-top:12px"><button class="btn ${r.checkedIn ? 'ghost' : 'primary'}" id="checkin">${r.checkedIn ? 'Edit check-in' : 'Morning check-in'}</button>${MCP ? '<button class="btn ghost" id="gsync">Sync Garmin</button>' : ''}</div>
+    <div class="hint" style="margin-top:8px">${esc(lastSyncText())}</div></div>`;
+
+  h += `<div class="card"><h2>Today's training <button data-add="${t}">+ Add</button></h2>
+    ${todays.length ? todays.map(w => woHtml(w, { actions: true })).join('') : '<div class="empty">Nothing planned. <b>Rest</b>, or add something. The coach can plan your week from the Plan tab.</div>'}</div>`;
+
+  h += `<div class="card"><h2>This week <a href="#plan">Plan</a></h2><div class="week">` +
+    [...Array(7)].map((_, i) => {
+      const day = addDays(ws, i), its = week.filter(w => w.date === day && typeOf(w.type) !== 'rest');
+      return `<div class="day ${day === t ? 'today' : ''}">${dname(day).slice(0, 2)}<b>${+day.slice(8)}</b><div class="dots">${its.map(w => `<i class="t-${typeOf(w.type)} ${w.status === 'done' ? 'done' : ''}" style="${w.status === 'skipped' ? 'opacity:.3' : ''}"></i>`).join('')}</div></div>`;
+    }).join('') + `</div>${adh.pct != null ? `<div class="hint" style="margin-top:10px">Last 4 weeks: ${adh.done}/${adh.planned} planned sessions done (${adh.pct}%)</div>` : ''}</div>`;
+
+  const sg = goals.filter(g => g.horizon === 'short').slice(0, 3);
+  if (sg.length) h += `<div class="card"><h2>Short-term goals <a href="#goals">All</a></h2>${sg.map(goalRow).join('')}</div>`;
+  if (rp.length) h += `<div class="card"><h2>New PRs · last 2 weeks</h2>${rp.map(p => `<div class="item">🏆 <span class="grow">${esc(p)}</span></div>`).join('')}</div>`;
+  const recentActs = [...D.acts].sort((a, b) => (b.start_time || b.date || '').localeCompare(a.start_time || a.date || '')).slice(0, 5);
+  if (recentActs.length) h += `<div class="card"><h2>From your watch</h2>${recentActs.map(a => `<div class="item">
+      <div class="wo" style="padding:0;border:0"><div class="bar t-${typeOf(a.type)}"></div></div>
+      <div class="grow"><div style="font-weight:600">${esc(a.name || a.type)}</div><div class="small muted">${dname(a.date, { weekday: 'short', day: 'numeric', month: 'short' })}</div></div>
+      <div class="r small">${[mins((a.duration_s || 0) / 60), km(a.distance_m)].filter(Boolean).join(' · ')}<div class="faint">${a.avg_hr ? Math.round(a.avg_hr) + ' bpm' : ''}${a.training_load ? ' · load ' + Math.round(a.training_load) : ''}</div></div></div>`).join('')}</div>`;
+  if (SAMPLE) h += `<button class="btn primary fab" id="askfab">${SPARK} Ask coach</button>`;
+  view.innerHTML = h;
+
+  $('#gear').onclick = openSettings;
+  $('#setup-profile')?.addEventListener('click', openSettings);
+  $('#checkin').onclick = checkinSheet;
+  $('#gsync')?.addEventListener('click', e => busy(e.currentTarget, () => syncGarmin(e.currentTarget)));
+  $('#askfab')?.addEventListener('click', openCoach);
+  view.querySelectorAll('[data-add]').forEach(b => b.onclick = () => workoutSheet({ date: b.dataset.add, type: 'strength' }));
+  bindWorkouts(view); bindGoals(view);
+}
+
+/* ---------- PLAN ---------- */
+function renderPlan() {
+  S.planWeek = S.planWeek || (new Date().getDay() === 0 ? addDays(monday(), 7) : monday());
+  const ws = S.planWeek, we = addDays(ws, 6), t = todayIso();
+  const items = D.planned.filter(w => w.date >= ws && w.date <= we).sort(byDate);
+  const lp = [...D.aiplans].filter(p => p.week_start === ws).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))[0];
+  const label = `${dname(ws, { month: 'short', day: 'numeric' })} – ${dname(we, { month: 'short', day: 'numeric' })}`;
+
+  let h = header('Plan', ws === monday() ? 'This week' : ws < monday() ? 'Past week' : 'Upcoming week');
+  h += `<div class="weeknav"><button class="icon-btn" id="prev">‹</button><b>${label}</b><button class="icon-btn" id="next">›</button></div>`;
+  h += SAMPLE ? `<div class="card ai-card"><h2>AI coach</h2>
+    <p class="small muted" style="margin:-4px 0 10px">Builds this week around your goals, your planned sessions, recovery check-ins and recent numbers. Your own workouts are kept unless there's a reason to change them.</p>
+    <label class="f"><textarea id="note" placeholder="Optional: 'only 4 days this week', 'knee is sore', 'race on Sunday'…" style="min-height:60px"></textarea></label>
+    <button class="btn primary block" id="gen">${SPARK} Plan this week</button></div>`
+    : `<div class="card"><div class="empty">The AI coach isn't available in this view. Open the page in Claude (app or claude.ai) to use it.</div></div>`;
+  if (lp) h += aiPlanHtml(lp);
+  for (let i = 0; i < 7; i++) {
+    const day = addDays(ws, i), its = items.filter(w => w.date === day);
+    h += `<div class="daygroup"><div class="dh ${day === t ? 'today' : ''}"><b>${dname(day, { weekday: 'long', day: 'numeric' })}</b><button class="add" data-add="${day}">+</button></div>
+      <div class="card" style="margin-bottom:6px;padding:${its.length ? '12px 16px' : '10px 16px'}">${its.length ? its.map(w => woHtml(w, { actions: day <= t })).join('') : '<div class="empty faint">Rest / nothing planned</div>'}</div></div>`;
+  }
+  view.innerHTML = h;
+  $('#prev').onclick = () => { S.planWeek = addDays(ws, -7); render(); };
+  $('#next').onclick = () => { S.planWeek = addDays(ws, 7); render(); };
+  view.querySelectorAll('[data-add]').forEach(b => b.onclick = () => workoutSheet({ date: b.dataset.add, type: 'strength' }));
+  bindWorkouts(view);
+  $('#gen')?.addEventListener('click', e => busy(e.currentTarget, async () => {
+    toast('Coach is thinking… (20–60 s)');
+    await planWeek(ws, $('#note').value);
+    setTimeout(() => $('.ai-plan')?.scrollIntoView({ behavior: 'smooth' }), 300);
+  }));
+  view.querySelectorAll('[data-apply]').forEach(b => b.onclick = e => busy(e.currentTarget, async () => {
+    await applyPlan(D.aiplans.find(p => p.id === b.dataset.apply), b.dataset.replace === '1'); toast('Added to your week');
+  }));
+  view.querySelectorAll('[data-dismiss]').forEach(b => b.onclick = () => del('aiplans', b.dataset.dismiss).catch(dbErr));
+}
+function aiPlanHtml(lp) {
+  const p = lp.plan || {}, list = a => (a && a.length) ? `<ul>${a.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+  return `<div class="card ai-card ai-plan"><h2>Suggested week ${lp.applied ? '<span class="tag done">Applied</span>' : `<button data-dismiss="${lp.id}">Dismiss</button>`}</h2>
+    <p style="margin:0 0 8px">${esc(p.summary)}</p>
+    ${p.readiness_take ? `<p class="small muted" style="margin:0 0 8px">${esc(p.readiness_take)}</p>` : ''}
+    ${(p.changes_to_my_plan || []).length ? `<div class="small" style="margin-top:8px"><b>Changes to your plan</b>${list(p.changes_to_my_plan)}</div>` : ''}
+    ${(p.watch_outs || []).length ? `<div class="small" style="margin-top:8px"><b>Watch outs</b>${list(p.watch_outs)}</div>` : ''}
+    <div style="margin-top:10px">${(p.days || []).map(d => `<div class="ai-day"><div class="row between"><b>${dname(d.date, { weekday: 'short', day: 'numeric' })} · ${esc(d.title)}</b><span class="small muted">${[mins(d.duration_min), d.intensity].filter(Boolean).join(' · ')}</span></div>
+      ${d.details ? `<div class="small" style="color:#c3c9d4;white-space:pre-wrap;margin-top:3px">${esc(d.details)}</div>` : ''}
+      ${d.why ? `<div class="why">${d.keeps_my_plan ? '✓ Your session · ' : ''}${esc(d.why)}</div>` : ''}</div>`).join('')}</div>
+    ${lp.applied ? '' : `<div class="btn-row" style="margin-top:12px"><button class="btn primary" data-apply="${lp.id}">Add to my week</button><button class="btn ghost" data-apply="${lp.id}" data-replace="1">Replace my plan</button></div>
+    <p class="hint">"Add" fills in the AI sessions and keeps yours. "Replace" swaps out your planned (not completed) sessions for this week.</p>`}</div>`;
+}
+
+/* ---------- AI coach ---------- */
+const COACH_RULES = `You are a pragmatic, evidence-based endurance and strength coach for ONE athlete, working inside their personal training app.
+Principles:
+- Goals drive every decision: tie recommendations to short-term goals, and short-term goals to the long-term goal.
+- Respect the athlete's planned workouts. Keep them unless there's a clear reason (recovery signals, load spike, conflict with a goal); say why when you change one.
+- Use recovery data (HRV vs baseline, resting HR, sleep, Body Battery, soreness, acute:chronic load ratio) to set intensity. Ratio > 1.3 or two red signals -> reduce intensity/volume.
+- Progressive overload in small steps; hard/easy alternation; no consecutive hard days unless the athlete planned them.
+- Be specific: sets x reps @ load (or %e1RM / RPE), paces, HR zones, durations.
+- Data may be missing (recovery numbers come from Garmin syncs or are typed in by hand, so recent days can be absent); say so rather than guess. Never invent numbers that aren't in the data.
+- Not a doctor: if pain or injury is mentioned, recommend getting it checked and plan conservatively.
+- Be concise.`;
+
+function buildContext(ws) {
+  const t = todayIso(); ws = ws || monday(t);
+  const pick = (o, ks) => Object.fromEntries(ks.filter(k => o[k] != null && o[k] !== '').map(k => [k, o[k]]));
+  return JSON.stringify({
+    today: t, weekday: dname(t, { weekday: 'long' }), target_week_start: ws,
+    athlete_profile: PROFILE,
+    goals: goalsWithProgress().filter(g => g.status === 'active').map(g => ({ ...pick(g, ['horizon', 'title', 'metric', 'baseline_value', 'target_value', 'unit', 'better', 'target_date', 'notes']), current: g.progress?.current, pct: g.progress?.pct })),
+    readiness_today: readiness(), load_ratio: loadRatio(), weekly_volume_last_8_weeks: weeklyVolume(8), plan_adherence_last_4_weeks: adherence(4),
+    planned_workouts_window: D.planned.filter(w => w.date >= addDays(ws, -14) && w.date <= addDays(ws, 13)).sort(byDate).map(w => pick(w, ['date', 'title', 'type', 'details', 'duration_min', 'distance_km', 'intensity', 'source', 'status', 'rpe', 'feel_notes'])),
+    watch_activities_last_28_days: D.acts.filter(a => a.date >= addDays(t, -28)).sort(byDate).map(a => ({ ...pick(a, ['date', 'name', 'type', 'avg_hr', 'training_load']), min: Math.round((a.duration_s || 0) / 60), km: a.distance_m ? Math.round(a.distance_m / 10) / 100 : undefined })),
+    recovery_last_14_days: dailySeries(14).map(r => pick(r, ['date', 'sleep_hours', 'sleep_score', 'hrv', 'rhr', 'body_battery', 'soreness'])),
+    lift_logs_last_6_weeks: D.lifts.filter(l => l.date >= addDays(t, -42)).sort(byDate).map(l => pick(l, ['date', 'exercise', 'sets', 'reps', 'weight', 'unit', 'rpe', 'notes'])),
+    other_numbers_last_90_days: D.metrics.filter(m => m.date >= addDays(t, -90)).sort(byDate).map(m => pick(m, ['date', 'metric', 'value', 'unit', 'notes'])),
+    personal_records: (p => [...p.lifts.filter(l => l.best_e1rm).map(l => `${l.exercise}: e1RM ${l.best_e1rm.value}${l.unit} (${l.best_e1rm.date})`), ...p.metrics.map(m => `${m.metric}: best ${m.best.value} ${m.unit || ''} (${m.best.date})`)])(prs()),
+  });
+}
+function extractJson(text) {
+  const m = text.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+  return JSON.parse(m ? m[1] : text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
+}
+const sampleErr = e => { if (e && e.code === 'not_granted') return new Error('The coach needs permission to use Claude. Allow it when asked.'); if (e && e.code === 'rate_limited') return new Error('Claude usage limit reached for now. Try again later.'); return new Error(e?.message || 'The coach could not answer. Try again.'); };
+
+async function planWeek(ws, note) {
+  if (!SAMPLE) throw new Error('AI coach unavailable here');
+  const days = [...Array(7)].map((_, i) => addDays(ws, i)).filter(d => d >= todayIso());
+  if (!days.length) throw new Error('That week is over. Pick this week or next.');
+  const prompt = `${COACH_RULES}
+
+Athlete data (JSON):
+${buildContext(ws)}
+
+Plan the training days ${days[0]} to ${days[days.length - 1]}${days.length < 7 ? ' (earlier days of this week are already history; see planned_workouts_window)' : ''}.
+${note ? 'Extra request from the athlete: ' + note : ''}
+
+Return ONLY a JSON object, no prose outside it:
+{"summary":"2-3 sentences: the week's focus and how it moves the short-term goals","readiness_take":"1-2 sentences on recovery/load data (say if data is missing)","days":[{"date":"YYYY-MM-DD","title":"short name","type":"run|strength|bike|swim|mobility|rest|other","duration_min":45,"intensity":"easy|moderate|hard","details":"specific prescription","keeps_my_plan":true,"why":"one line tying it to a goal or recovery"}],"changes_to_my_plan":["what changed in the athlete's planned workouts and why (empty if none)"],"watch_outs":["short warnings or data gaps"]}
+Exactly one entry per day from ${days[0]} to ${days[days.length - 1]} (${days.length} entries); type "rest" for rest days.`;
+  let res;
+  try { res = await SAMPLE(prompt, { modelTier: 'complex', cache: false }); } catch (e) { throw sampleErr(e); }
+  let plan;
+  try { plan = extractJson(res.text); } catch { throw new Error("The coach's reply wasn't in the expected format. Try again."); }
+  await add('aiplans', { week_start: ws, plan, applied: false });
+  // keep only the 12 most recent suggestions
+  const old = [...D.aiplans].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')).slice(12);
+  for (const o of old) await del('aiplans', o.id).catch(() => {});
+}
+async function applyPlan(lp, replaceMine) {
+  const days = (lp.plan.days || []).filter(d => d.date >= todayIso());
+  if (!days.length) throw new Error('All days in this suggestion have passed.');
+  const dates = days.map(d => d.date).sort();
+  const lo = dates[0], hi = dates[dates.length - 1];
+  for (const w of D.planned.filter(w => w.date >= lo && w.date <= hi && (w.status || 'planned') === 'planned' && (w.source === 'ai' || (replaceMine && w.source !== 'ai')))) await del('planned', w.id);
+  for (const d of days) {
+    const mine = D.planned.some(w => w.date === d.date && w.source !== 'ai' && (!replaceMine || w.status !== 'planned'));
+    if (!replaceMine && mine && (d.keeps_my_plan || typeOf(d.type) === 'rest')) continue;
+    if (replaceMine && mine && typeOf(d.type) === 'rest') continue;
+    await add('planned', { date: d.date, title: d.title || 'Workout', type: d.type || 'other', details: ((d.details || '') + (d.why ? `\n\nWhy: ${d.why}` : '')).trim(), duration_min: d.duration_min ?? null, intensity: d.intensity ?? null, source: 'ai', status: 'planned', ai_plan_id: lp.id });
+  }
+  await upd('aiplans', lp.id, { applied: true });
+}
+
+function openCoach() {
+  const msgs = [...D.chat].sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
+  openSheet(`<h3 class="row between">Coach <button class="btn sm ghost" id="clr">Clear</button></h3>
+    <div class="chat" id="chat">${msgs.map(m => `<div class="msg ${m.role}">${m.role === 'assistant' ? md(m.content) : esc(m.content)}</div>`).join('') || '<div class="empty">Ask anything about your training. The coach sees your goals, plan, logs and check-ins.</div>'}</div>
+    <div class="chips"><button class="chip" data-q="Review my last 7 days: planned vs. done, recovery trends, any PRs, and progress toward each short-term goal. Then the 3 most important adjustments for next week. Short headings and bullets.">Weekly review</button>
+      <button class="chip" data-q="Should I train hard today or back off?">Hard or easy today?</button>
+      <button class="chip" data-q="Am I on track for my short-term goals? What's the biggest limiter?">On track?</button>
+      <button class="chip" data-q="Suggest how to progress my main lifts next week based on my recent sets.">Progress my lifts</button></div>
+    <div class="row"><input id="q" placeholder="Ask your coach…" class="grow"><button class="btn primary" id="send">Send</button></div>`, sh => {
+    const chat = $('#chat', sh); chat.scrollTop = chat.scrollHeight;
+    const send = async (q, label) => {
+      chat.querySelector('.empty')?.remove();
+      chat.insertAdjacentHTML('beforeend', `<div class="msg user">${esc(label)}</div><div class="msg assistant" id="pending"><span class="loading"></span></div>`);
+      chat.scrollTop = chat.scrollHeight;
+      const pend = $('#pending', sh);
+      const history = msgs.slice(-10).map(m => ({ role: m.role, content: m.content }));
+      const input = [{ role: 'user', content: `${COACH_RULES}\n\nMy current data (JSON), for reference:\n${buildContext()}` },
+        { role: 'assistant', content: 'Got it. I have your data. What would you like to know?' }, ...history, { role: 'user', content: q }];
+      try {
+        const r = await SAMPLE(input, { cache: false, onText: ({ text }) => { pend.innerHTML = md(text || 'Thinking…'); chat.scrollTop = chat.scrollHeight; } });
+        pend.removeAttribute('id'); pend.innerHTML = md(r.text);
+        await add('chat', { role: 'user', content: q }); await add('chat', { role: 'assistant', content: r.text });
+        msgs.push({ role: 'user', content: q }, { role: 'assistant', content: r.text });
+        const extra = [...D.chat].sort((a, b) => (a.created_at || '').localeCompare(b.created_at || '')).slice(0, Math.max(0, D.chat.length - 60));
+        for (const m of extra) await del('chat', m.id).catch(() => {});
+      } catch (e) { pend.removeAttribute('id'); pend.style.color = 'var(--low)'; pend.textContent = sampleErr(e).message; }
+      chat.scrollTop = chat.scrollHeight;
+    };
+    $('#send', sh).onclick = () => { const v = $('#q', sh).value.trim(); if (v) { $('#q', sh).value = ''; send(v, v); } };
+    $('#q', sh).onkeydown = e => { if (e.key === 'Enter') $('#send', sh).click(); };
+    sh.querySelectorAll('[data-q]').forEach(c => c.onclick = () => send(c.dataset.q, c.textContent));
+    $('#clr', sh).onclick = async () => { for (const m of [...D.chat]) await del('chat', m.id).catch(() => {}); closeSheet(); };
+  });
+}
+
+/* ---------- LOG ---------- */
+function renderLog() {
+  const unit = units(), names = knownNames();
+  let h = header('Log', 'History, numbers & PRs');
+  h += `<div class="seg">${[['lifts', 'Lifts'], ['metrics', 'Numbers'], ['prs', 'PRs']].map(([k, l]) => `<button data-seg="${k}" class="${S.logTab === k ? 'on' : ''}">${l}</button>`).join('')}</div><div id="logbody">`;
+  if (S.logTab === 'lifts') {
+    h += `<div class="card" id="liftform"><h2>Log a lift</h2>
+      <datalist id="exlist">${names.exercises.map(e => `<option value="${esc(e)}">`).join('')}</datalist>
+      <div class="grid2"><label class="f"><span>Exercise</span><input name="exercise" list="exlist" placeholder="Back squat" autocapitalize="words" value="${esc(S.lastEx || '')}"></label>
+      <label class="f"><span>Date</span><input name="date" type="date" value="${S.lastDate || todayIso()}"></label></div>
+      <div class="grid4"><label class="f"><span>Sets</span><input name="sets" type="number" inputmode="numeric" value="${S.lastSets || 3}"></label>
+      <label class="f"><span>Reps</span><input name="reps" type="number" inputmode="numeric" value="${S.lastReps || ''}"></label>
+      <label class="f"><span>${unit}</span><input name="weight" type="number" inputmode="decimal" step="0.5" value="${S.lastW ?? ''}"></label>
+      <label class="f"><span>RPE</span><input name="rpe" type="number" inputmode="decimal" step="0.5" min="1" max="10"></label></div>
+      <button class="btn primary block" id="addlift">Add</button>
+      <p class="hint">One line per set scheme (e.g. 3 × 5 @ 100). Sets of 12 reps or fewer count toward estimated 1RM.</p></div>`;
+    h += groupByDate([...D.lifts].sort(byDate).reverse().slice(0, 150), l => `<div class="item"><div class="grow"><b style="font-weight:600">${esc(l.exercise)}</b>${l.rpe ? ` <span class="faint small">RPE ${l.rpe}</span>` : ''}</div>
+      <div class="r">${l.sets || 1} × ${l.reps} @ ${num(l.weight)} ${esc(l.unit || unit)}</div><button class="x" data-del-lift="${l.id}">×</button></div>`);
+  }
+  if (S.logTab === 'metrics') {
+    h += `<div class="card" id="mform"><h2>Log a number</h2>
+      <datalist id="mlist">${names.metrics.map(e => `<option value="${esc(e)}">`).join('')}</datalist>
+      <label class="f"><span>What</span><input name="metric" list="mlist" placeholder="5k time, Bodyweight, Max pull-ups…"></label>
+      <div class="grid3"><label class="f"><span>Value</span><input name="value" type="number" inputmode="decimal" step="any"></label>
+      <label class="f"><span>Unit</span><input name="unit" placeholder="min, kg, reps"></label>
+      <label class="f"><span>Better</span><select name="better"><option value="higher">higher</option><option value="lower">lower</option></select></label></div>
+      <div class="grid2"><label class="f"><span>Date</span><input name="date" type="date" value="${todayIso()}"></label>
+      <label class="f"><span>Note</span><input name="notes"></label></div>
+      <button class="btn primary block" id="addm">Add</button>
+      <p class="hint">Times: enter minutes as decimals (24:30 → 24.5) and set "Better" to lower.</p></div>`;
+    h += groupByDate([...D.metrics].sort(byDate).reverse().slice(0, 150), m => `<div class="item"><div class="grow">${esc(m.metric)}${m.notes ? `<div class="small faint">${esc(m.notes)}</div>` : ''}</div>
+      <div class="r"><b>${num(m.value)}</b> ${esc(m.unit || '')}</div><button class="x" data-del-m="${m.id}">×</button></div>`);
+  }
+  if (S.logTab === 'prs') {
+    const p = prs();
+    h += `<div class="card"><h2>Lifts · best estimated 1RM</h2>${p.lifts.length ? p.lifts.map(l => `<div class="item"><div class="grow"><b style="font-weight:600">${esc(l.exercise)}</b>
+        <div class="small muted">${l.best_e1rm ? `${num(l.best_e1rm.weight)}×${l.best_e1rm.reps} on ${l.best_e1rm.date}` : ''}${l.best_weight ? ` · heaviest ${num(l.best_weight.value)}${esc(l.unit)}` : ''}</div></div>
+        <div class="r"><b style="font-size:18px">${l.best_e1rm ? num(l.best_e1rm.value) : '–'}</b> <span class="small muted">${esc(l.unit)}</span></div></div>`).join('') : '<div class="empty">Log lifts to see PRs.</div>'}</div>
+      <div class="card"><h2>Other numbers · best</h2>${p.metrics.length ? p.metrics.map(m => `<div class="item"><div class="grow"><b style="font-weight:600">${esc(m.metric)}</b><div class="small muted">best on ${m.best.date} · latest ${num(m.latest.value)}</div></div>
+        <div class="r"><b style="font-size:18px">${num(m.best.value)}</b> <span class="small muted">${esc(m.unit || '')}</span></div></div>`).join('') : '<div class="empty">Log numbers to see bests.</div>'}</div>`;
+  }
+  view.innerHTML = h + '</div>';
+  view.querySelectorAll('[data-seg]').forEach(b => b.onclick = () => { S.logTab = b.dataset.seg; render(); });
+  $('#addlift')?.addEventListener('click', e => busy(e.currentTarget, async () => {
+    const d = formData($('#liftform'));
+    if (!d.exercise || !d.reps || d.weight == null) return toast('Exercise, reps and weight please', true);
+    Object.assign(S, { lastEx: d.exercise.trim(), lastSets: d.sets, lastReps: d.reps, lastW: d.weight, lastDate: d.date });
+    await add('lifts', { ...d, exercise: d.exercise.trim(), sets: d.sets || 1, unit }); toast('Logged');
+  }));
+  $('#addm')?.addEventListener('click', e => busy(e.currentTarget, async () => {
+    const d = formData($('#mform'));
+    if (!d.metric || d.value == null) return toast('Name and value please', true);
+    await add('metrics', { ...d, metric: d.metric.trim() }); toast('Logged');
+  }));
+  const mi = $('#mform [name=metric]');
+  if (mi) mi.onchange = () => { const last = [...D.metrics].sort(byDate).reverse().find(x => lc(x.metric) === lc(mi.value)); if (last) { $('#mform [name=unit]').value = last.unit || ''; $('#mform [name=better]').value = last.better || 'higher'; } };
+  view.querySelectorAll('[data-del-lift]').forEach(b => b.onclick = () => del('lifts', b.dataset.delLift).catch(dbErr));
+  view.querySelectorAll('[data-del-m]').forEach(b => b.onclick = () => del('metrics', b.dataset.delM).catch(dbErr));
+}
+function groupByDate(items, rowFn) {
+  if (!items.length) return '';
+  const g = {}; items.forEach(i => (g[i.date] = g[i.date] || []).push(i));
+  return Object.keys(g).sort().reverse().map(d => `<div class="section-title">${dname(d, { weekday: 'short', month: 'short', day: 'numeric' })}</div><div class="card">${g[d].map(rowFn).join('')}</div>`).join('');
+}
+
+/* ---------- TRENDS ---------- */
+function renderTrends() {
+  const w = weeklyVolume(12), dly = dailySeries(90), lr = loadRatio().ratio, adh = adherence(8), names = knownNames();
+  const wl = x => dname(x.week, { month: 'numeric', day: 'numeric' });
+  const avgMin = Math.round(w.slice(-4).reduce((a, x) => a + x.minutes, 0) / 4);
+  let h = header('Trends', 'Last 12 weeks');
+  h += `<div class="stats" style="margin-bottom:12px">
+    <div class="stat"><b>${adh.pct ?? '–'}${adh.pct != null ? '%' : ''}</b><span>Plan done (8 wk)</span></div>
+    <div class="stat"><b style="color:${lr == null ? 'inherit' : lr > 1.5 ? 'var(--low)' : lr > 1.3 || lr < .8 ? 'var(--ok)' : 'var(--good)'}">${lr ?? '–'}</b><span>Load ratio 7d:28d</span></div>
+    <div class="stat"><b>${mins(avgMin) || '–'}</b><span>Avg / week (4 wk)</span></div></div>`;
+  if (w.some(x => x.minutes)) {
+    h += `<div class="card"><h2>Training time per week</h2>${barChart(w.map(x => ({ label: wl(x), parts: x.minutes_by_type })), TYPE_COLORS, { highlightLast: true })}</div>`;
+    h += `<div class="card"><h2>Training load per week</h2>${barChart(w.map(x => ({ label: wl(x), parts: { load: x.load } })), { load: '#ff6b3d' }, { highlightLast: true })}
+      <div class="hint">From completed sessions: minutes × how hard they felt (RPE). Ratio 0.8–1.3 is the usual sweet spot; above 1.5 is a spike.</div></div>`;
+  } else h += `<div class="card"><div class="empty">Mark sessions as done (with RPE) to see training time and load.</div></div>`;
+  if (w.some(x => x.run_km)) h += `<div class="card"><h2>Running distance (km)</h2>${barChart(w.map(x => ({ label: wl(x), parts: { run: x.run_km } })), { run: TYPE_COLORS.run })}</div>`;
+  if (w.some(x => x.tonnage)) h += `<div class="card"><h2>Lifting volume (sets × reps × weight)</h2>${barChart(w.map(x => ({ label: wl(x), parts: { strength: x.tonnage } })), { strength: TYPE_COLORS.strength })}</div>`;
+  const ser = f => dly.map(r => ({ date: r.date, value: r[f] ?? null }));
+  const avg7 = a => a.map((p, i) => { const win = a.slice(Math.max(0, i - 6), i + 1).filter(x => x.value != null); return { date: p.date, value: win.length ? mean(win.map(x => x.value)) : null }; });
+  h += `<div class="section-title">Recovery · 90 days</div>`;
+  if (dly.length >= 2) {
+    if (dly.some(r => r.hrv != null)) { const hrv = ser('hrv'); h += `<div class="card"><h2>HRV (ms)</h2>${lineChart([{ name: 'Nightly', color: '#2ed3c6', points: hrv }, { name: '7-day avg', color: '#eef1f5', points: avg7(hrv), dashed: true }])}</div>`; }
+    if (dly.some(r => r.rhr != null)) h += `<div class="card"><h2>Resting heart rate (bpm)</h2>${lineChart([{ name: 'RHR', color: '#ff5c6c', points: ser('rhr') }])}</div>`;
+    if (dly.some(r => r.sleep_hours != null)) h += `<div class="card"><h2>Sleep (hours)</h2>${lineChart([{ name: 'Sleep', color: '#b38cff', points: ser('sleep_hours') }], { band: [7, 9] })}<div class="hint">Shaded band = 7–9 h.</div></div>`;
+    if (dly.some(r => r.body_battery != null)) h += `<div class="card"><h2>Body Battery (daily peak)</h2>${lineChart([{ name: 'Body Battery', color: '#3ddc84', points: ser('body_battery') }])}</div>`;
+  } else h += `<div class="card"><div class="empty">Do the morning check-in on a few days to see recovery trends.</div></div>`;
+  h += `<div class="section-title">Strength · estimated 1RM</div><div class="card">${names.exercises.length ? `<div class="chips">${names.exercises.map(e => `<button class="chip" data-lift="${esc(e)}">${esc(e)}</button>`).join('')}</div><div id="liftchart"></div>` : '<div class="empty">Log lifts to see strength trends.</div>'}</div>`;
+  h += `<div class="section-title">Your numbers</div><div class="card">${names.metrics.length ? `<div class="chips">${names.metrics.map(e => `<button class="chip" data-met="${esc(e)}">${esc(e)}</button>`).join('')}</div><div id="metchart"></div>` : '<div class="empty">Log numbers (5k time, bodyweight…) to see trends.</div>'}</div>`;
+  view.innerHTML = h;
+  const chips = (attr, fn, target, key, color) => {
+    const cs = view.querySelectorAll(`[data-${attr}]`); if (!cs.length) return;
+    const sel = S[key] && [...cs].some(c => c.dataset[attr] === S[key]) ? S[key] : cs[0].dataset[attr];
+    S[key] = sel; cs.forEach(c => c.classList.toggle('on', c.dataset[attr] === sel));
+    $(target).innerHTML = lineChart([{ name: sel, color, points: fn(sel) }], { dots: true });
+    cs.forEach(c => c.onclick = () => { S[key] = c.dataset[attr]; chips(attr, fn, target, key, color); });
+  };
+  chips('lift', liftSeries, '#liftchart', 'liftSel', '#ff6b3d');
+  chips('met', metricSeries, '#metchart', 'metricSel', '#4fa3ff');
+}
+
+/* ---------- GOALS ---------- */
+function goalRow(g) {
+  const p = g.progress, target = g.target_value != null ? `${num(g.target_value)} ${esc(g.unit || '')}` : '';
+  return `<div class="goal" data-goal="${g.id}"><div class="row between"><span class="t">${esc(g.title)}</span>
+      ${g.status !== 'active' ? `<span class="tag ${g.status === 'achieved' ? 'done' : ''}">${g.status}</span>` : p?.days_left != null ? `<span class="small muted">${p.days_left >= 0 ? p.days_left + ' days left' : 'overdue'}</span>` : g.target_date ? `<span class="small muted">by ${dname(g.target_date, { month: 'short', day: 'numeric' })}</span>` : ''}</div>
+    ${p?.pct != null ? `<div class="prog"><i style="width:${p.pct}%"></i></div>` : ''}
+    <div class="small muted">${p ? `Now ${num(p.current)} ${esc(g.unit || '')}${target ? ' → ' + target : ''}${p.pct != null ? ` · ${p.pct}%` : ''}` : g.metric ? `Tracking "${esc(g.metric)}": log it to see progress` : target ? 'Target ' + target : ''}</div></div>`;
+}
+function bindGoals(root) { root.querySelectorAll('[data-goal]').forEach(el => el.onclick = () => goalSheet(D.goals.find(g => g.id === el.dataset.goal))); }
+function renderGoals() {
+  const goals = goalsWithProgress(), longs = goals.filter(g => g.horizon === 'long'), shorts = goals.filter(g => g.horizon === 'short');
+  let h = header('Goals', 'Long-term direction, short-term steps');
+  h += `<div class="section-title">Long-term</div>`;
+  h += longs.length ? longs.map(g => `<div class="card goal-long" data-goal="${g.id}" style="cursor:pointer">
+      <div class="row between"><b style="font-size:19px">${esc(g.title)}</b>${g.target_date ? `<span class="small muted">by ${dname(g.target_date, { month: 'short', year: 'numeric' })}</span>` : ''}</div>
+      ${g.notes ? `<p class="small muted" style="margin:6px 0 0">${esc(g.notes)}</p>` : ''}
+      ${g.progress ? `<div class="prog"><i style="width:${g.progress.pct || 0}%"></i></div><div class="small muted">Now ${num(g.progress.current)} ${esc(g.unit || '')} → ${num(g.target_value)} ${esc(g.unit || '')}</div>` : ''}
+      <div class="small faint" style="margin-top:8px">${shorts.filter(s => s.parent_id === g.id).length} short-term goal(s) linked</div></div>`).join('')
+    : `<div class="card"><div class="empty">Where do you want to be in 6–12 months? e.g. <b>Run a sub-45 10k</b>, <b>Squat 1.75× bodyweight</b>, <b>Finish a half Ironman</b>.</div></div>`;
+  h += `<button class="btn ghost block" data-new="long" style="margin-bottom:8px">+ Long-term goal</button>`;
+  h += `<div class="section-title">Short-term (4–12 weeks)</div><div class="card">${shorts.length ? shorts.map(goalRow).join('') : '<div class="empty">Break the long-term goal into measurable steps, e.g. <b>Bench e1RM 100 kg by Jan 31</b>.</div>'}</div>`;
+  h += `<button class="btn ghost block" data-new="short">+ Short-term goal</button>`;
+  h += `<p class="hint" style="margin:14px 4px">Tip: set "Track with" to an exercise name (uses your best e1RM) or a number you log (5k time, bodyweight) and progress updates automatically.</p>`;
+  view.innerHTML = h;
+  bindGoals(view);
+  view.querySelectorAll('[data-new]').forEach(b => b.onclick = () => goalSheet({ horizon: b.dataset.new, better: 'higher' }));
+}
+function goalSheet(g) {
+  const longs = D.goals.filter(x => x.horizon === 'long'), names = knownNames(), isNew = !g.id;
+  openSheet(`<h3>${isNew ? 'New' : 'Edit'} ${g.horizon === 'long' ? 'long-term' : 'short-term'} goal</h3>
+    <label class="f"><span>Goal</span><input name="title" value="${esc(g.title || '')}" placeholder="${g.horizon === 'long' ? 'Run a sub-45 10k' : 'Squat 140 kg × 1'}"></label>
+    <label class="f"><span>Track with (exercise or logged number)</span><input name="metric" list="glist" value="${esc(g.metric || '')}" placeholder="Back squat / 10k time">
+      <datalist id="glist">${[...names.exercises, ...names.metrics].map(e => `<option value="${esc(e)}">`).join('')}</datalist></label>
+    <div class="grid3"><label class="f"><span>Start</span><input name="baseline_value" type="number" step="any" value="${g.baseline_value ?? ''}"></label>
+    <label class="f"><span>Target</span><input name="target_value" type="number" step="any" value="${g.target_value ?? ''}"></label>
+    <label class="f"><span>Unit</span><input name="unit" value="${esc(g.unit || '')}" placeholder="kg / min"></label></div>
+    <div class="grid2"><label class="f"><span>Better is</span><select name="better"><option ${g.better !== 'lower' ? 'selected' : ''}>higher</option><option ${g.better === 'lower' ? 'selected' : ''}>lower</option></select></label>
+    <label class="f"><span>By</span><input name="target_date" type="date" value="${g.target_date || ''}"></label></div>
+    ${g.horizon === 'short' && longs.length ? `<label class="f"><span>Supports long-term goal</span><select name="parent_id"><option value="">—</option>${longs.map(l => `<option value="${l.id}" ${g.parent_id === l.id ? 'selected' : ''}>${esc(l.title)}</option>`).join('')}</select></label>` : ''}
+    <label class="f"><span>Why it matters / notes</span><textarea name="notes" placeholder="Context the coach should know">${esc(g.notes || '')}</textarea></label>
+    ${isNew ? '' : `<label class="f"><span>Status</span><select name="status">${['active', 'achieved', 'dropped'].map(s => `<option ${(g.status || 'active') === s ? 'selected' : ''}>${s}</option>`).join('')}</select></label>`}
+    <div class="btn-row">${isNew ? '' : '<button class="btn ghost" id="del">Delete</button>'}<button class="btn primary" id="save">Save</button></div>`, sh => {
+    $('#save', sh).onclick = e => busy(e.currentTarget, async () => {
+      const d = formData(sh); if (!d.title) return toast('Name your goal', true);
+      if (isNew) await add('goals', { ...d, horizon: g.horizon, status: 'active' }); else await upd('goals', g.id, d);
+      closeSheet();
+    });
+    if (!isNew) $('#del', sh).onclick = e => busy(e.currentTarget, async () => { await del('goals', g.id); closeSheet(); });
+  });
+}
+
+/* ---------- SETTINGS ---------- */
+function openSettings() {
+  const p = PROFILE;
+  const pf = (name, label, ph = '', type = 'text') => `<label class="f"><span>${label}</span><input data-p="${name}" type="${type}" value="${esc(p[name] ?? '')}" placeholder="${ph}"></label>`;
+  openSheet(`<h3>Settings</h3>
+    <div class="section-title" style="margin-top:0">About you (the coach uses this)</div>
+    <div class="grid2">${pf('age', 'Age', '29', 'number')}${pf('bodyweight', 'Bodyweight', '78 kg')}</div>
+    <div class="grid2">${pf('days_per_week', 'Training days / week', '5', 'number')}${pf('session_minutes', 'Usual session (min)', '60', 'number')}</div>
+    ${pf('sports', 'Sports / focus', 'Strength + running, hybrid')}
+    ${pf('experience', 'Experience', '4 yrs lifting, 1 yr running')}
+    ${pf('equipment', 'Equipment', 'Full gym; no pool')}
+    ${pf('schedule', 'Schedule constraints', 'Long run Sat only; no training Fri')}
+    ${pf('injuries', 'Injuries / limits', 'Left knee: avoid deep lunges')}
+    <label class="f"><span>Units</span><select data-p="units"><option ${units() === 'kg' ? 'selected' : ''}>kg</option><option ${units() === 'lb' ? 'selected' : ''}>lb</option></select></label>
+    <button class="btn primary block" id="save" style="margin-bottom:6px">Save</button>
+
+    <div class="section-title">Garmin</div>
+    <div class="card" style="background:var(--card-2)"><div class="small">${esc(lastSyncText())} · ${D.acts.length} activities, ${D.days.length} days stored.</div>
+      ${(GSYNC.problems || []).length ? `<ul class="small" style="color:var(--ok);margin:8px 0 0;padding-left:18px">${GSYNC.problems.map(p => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
+      ${MCP ? `<div class="btn-row" style="margin-top:10px"><button class="btn sm" id="gs">Sync now</button><button class="btn sm ghost" id="gs365">Sync last year</button></div>` : ''}
+      <div class="hint" style="margin-top:8px">Sync runs from the Claude desktop app on your laptop (with the Garmin helper). Your phone shows the synced data anywhere. Between syncs, use the Morning check-in.</div></div>
+
+    <div class="section-title">Your data</div>
+    <p class="hint" style="margin-top:-4px">Saved to your Claude account and visible only to you. It stays when the app is updated.</p>
+    <button class="btn ghost block" id="copy">Copy all my data (JSON)</button>`, sh => {
+    $('#save', sh).onclick = e => busy(e.currentTarget, async () => {
+      const profile = { ...p }; sh.querySelectorAll('[data-p]').forEach(i => { profile[i.dataset.p] = i.value === '' ? null : (i.type === 'number' ? Number(i.value) : i.value); });
+      await put('settings', 'profile', profile); closeSheet(); toast('Saved');
+    });
+    $('#gs', sh)?.addEventListener('click', e => busy(e.currentTarget, () => syncGarmin(e.currentTarget)));
+    $('#gs365', sh)?.addEventListener('click', e => busy(e.currentTarget, () => syncGarmin(e.currentTarget, 365)));
+    $('#copy', sh).onclick = async () => {
+      const data = { exported_at: new Date().toISOString(), profile: PROFILE, ...Object.fromEntries(COLS.map(c => [c, D[c]])) };
+      try { await navigator.clipboard.writeText(JSON.stringify(data, null, 1)); toast('Copied. Paste it anywhere to keep a backup.'); } catch { toast('Copy was blocked in this view', true); }
+    };
+  });
+}
+
+/* ---------- boot ---------- */
+render();
+view.innerHTML = '<div class="card" style="margin-top:40px"><div class="empty"><span class="loading"></span> Loading your data…</div></div>';
+initData();
+
+</script>
+</body>
+</html>
